@@ -44,24 +44,19 @@
           return null;
         }
       }
-      async function fetchTrailerMovie(movieId) {
-        const videosUrl = `${apiUrl}/movie/${movieId}/videos?api_key=${apiKey}`;
+      async function fetchMovieTrailer(movieId) {
+        const url = `${apiUrl}/movie/${movieId}/videos?api_key=${apiKey}`;
         try {
-          const response = await fetch(videosUrl);
+          const response = await fetch(url);
           const data = await response.json();
-
           if (data.results && data.results.length > 0) {
-            const trailer = data.results.find(
-              (video) =>
-                video.type === "Trailer" &&
-                video.site.toLowerCase() === "youtube"
+            const trailers = data.results.filter((video) =>
+              ["Trailer", "Teaser"].includes(video.type)
             );
-
-            if (trailer) {
-              return trailer.key;
+            if (trailers.length > 0) {
+              return `https://www.youtube.com/embed/${trailers[0].key}`;
             }
           }
-
           return null;
         } catch (error) {
           console.error("Error fetching movie trailer:", error);
