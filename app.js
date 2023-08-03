@@ -24,7 +24,7 @@ async function fetchTop3() {
         }
 
         carouselItem.addEventListener("click", () => {
-          window.open(`movie.html?id=${movie.id}`, "_blank");
+          window.location.href = `movie.html?id=${movie.id}`;
         });
 
         const movieImage = document.createElement("img");
@@ -55,7 +55,7 @@ function createMovieCard(movie) {
   );
 
   movieCard.addEventListener("click", () => {
-    window.open(`movie.html?id=${movie.id}`, "_blank");
+    window.location.href = `movie.html?id=${movie.id}`;
   });
   movieCard.dataset.movieId = movie.id;
 
@@ -168,5 +168,6 @@ document.getElementById("searchInput").addEventListener("input", (event) => {
   } else {
     searchMovies();
   }
+
 });
 

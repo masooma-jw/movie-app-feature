@@ -51,7 +51,7 @@
           const data = await response.json();
           if (data.results && data.results.length > 0) {
             const trailers = data.results.filter((video) =>
-              ["Trailer", "Teaser"].includes(video.type)
+              ["Trailer"].includes(video.type)
             );
             if (trailers.length > 0) {
               return `https://www.youtube.com/embed/${trailers[0].key}`;
