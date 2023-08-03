@@ -2,6 +2,7 @@ const apiKey = "2a5a6176cf791a73a44fd3b2855a512a";
 const imageBaseUrl = "https://image.tmdb.org/t/p/w500";
 
 let popularMovies = [];
+let currentPage = 1;
 
 async function fetchTop3() {
   let apiUrl = `https://api.themoviedb.org/3/trending/movie/day?api_key=${apiKey}`;
@@ -84,33 +85,23 @@ function createMovieCard(movie) {
 
 const popularMoviesSection = document.getElementById("popularMovies");
 
-async function fetchPopularMovies() {
-  console.log("Fetching popular movies...");
-  let url = `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}`;
+
+async function fetchPopularMovies(page) {
   try {
+    const url = `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&page=${page}`;
     const response = await fetch(url);
     const data = await response.json();
 
     if (data.results && data.results.length > 0) {
-      popularMovies = data.results;
-
-      popularMoviesSection.innerHTML = "";
-
-      data.results.forEach((movie) => {
-        const movieCard = createMovieCard(movie);
-        popularMoviesSection.appendChild(movieCard);
-      });
+      popularMovies = [...popularMovies, ...data.results];
+      displayPopularMovies();
     }
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error('Error fetching popular movies:', error);
   }
-
-  
 }
 
 
-
-fetchPopularMovies();
 
 
 
@@ -148,6 +139,10 @@ async function searchMovies() {
         searchResultsDiv.appendChild(movieCard);
       });
     } else {
+      document.getElementById("popularSection").style.display = "none";
+      
+      document.getElementById('searchSection').style.display = "block";
+
       const searchResultsDiv = document.getElementById("searchResults");
       searchResultsDiv.innerHTML = "<p>No results found.</p>";
     }
@@ -156,9 +151,21 @@ async function searchMovies() {
   }
 }
 
+
+
 function displayPopularMovies() {
   document.getElementById("popularSection").style.display = "block";
   document.getElementById('searchSection').style.display = "none";
+  popularMoviesSection.innerHTML = '';
+  const row = document.createElement('div');
+  row.classList.add('row');
+
+  popularMovies.forEach((movie) => {
+    const movieCard = createMovieCard(movie);
+    row.appendChild(movieCard);
+  });
+
+  popularMoviesSection.appendChild(row);
 }
 
 document.getElementById("searchInput").addEventListener("input", (event) => {
@@ -171,3 +178,57 @@ document.getElementById("searchInput").addEventListener("input", (event) => {
 
 });
 
+document.getElementById("searchBtn").addEventListener("click", (event) => {
+  const searchQuery = event.target.value.trim();
+  document.getElementById("carouselExampleIndicators").style.display = "none";
+  document.getElementById('searchSection').style.display = "block";
+  document.getElementById("popularSection").style.display = "none";
+  searchMovies()
+  
+  
+
+});
+
+
+
+
+function isBottomOfPage() {
+  return window.innerHeight + window.scrollY >= document.body.offsetHeight;
+}
+
+
+function handleInfiniteScroll() {
+  if (isBottomOfPage()) {
+    currentPage++;
+    if (document.getElementById("searchInput").value !== "") {
+      searchMovies();
+    } else {
+      fetchPopularMovies(currentPage);
+    }
+  }
+}
+
+
+function lazyLoadMovieCards() {
+  const movieCards = document.querySelectorAll('.movie-card');
+  movieCards.forEach((movieCard) => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.src = entry.target.dataset.src;
+          observer.unobserve(entry.target);
+        }
+      });
+    });
+
+    observer.observe(movieCard);
+  });
+}
+
+
+window.addEventListener('scroll', handleInfiniteScroll);
+window.addEventListener('load', () => {
+ 
+  fetchPopularMovies(currentPage);
+  lazyLoadMovieCards();
+});
