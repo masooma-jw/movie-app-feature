@@ -2,6 +2,7 @@ const apiKey = "2a5a6176cf791a73a44fd3b2855a512a";
 const imageBaseUrl = "https://image.tmdb.org/t/p/w500";
 
 let popularMovies = [];
+let searchResults = [];
 let currentPage = 1;
 
 async function fetchTop3() {
@@ -105,51 +106,80 @@ async function fetchPopularMovies(page) {
 
 
 
-async function fetchMovieDetails(movieId) {
-  const url = `${apiUrl}/movie/${movieId}?api_key=${apiKey}&append_to_response=credits`;
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error fetching movie details:", error);
-    return null;
-  }
-}
-
 const searchResultsDiv = document.getElementById("searchResults");
 document.getElementById('searchSection').style.display = "none";
 
-async function searchMovies() {
-  const searchQuery = document.getElementById("searchInput").value;
-  const apiUrl = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(
-    searchQuery
-  )}`;
 
+
+
+async function fetchSearchResults(query, page) {
   try {
+    const apiUrl = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(query)}&page=${page}`;
     const response = await fetch(apiUrl);
     const data = await response.json();
 
     if (data.results && data.results.length > 0) {
-      searchResultsDiv.innerHTML = "";
-      document.getElementById("popularSection").style.display = "none";
-      document.getElementById('searchSection').style.display = "block";
-      data.results.forEach((movie) => {
-        const movieCard = createMovieCard(movie);
-        searchResultsDiv.appendChild(movieCard);
-      });
-    } else {
-      document.getElementById("popularSection").style.display = "none";
-      
-      document.getElementById('searchSection').style.display = "block";
-
-      const searchResultsDiv = document.getElementById("searchResults");
-      searchResultsDiv.innerHTML = "<p>No results found.</p>";
+      searchResults = [...searchResults, ...data.results];
+      displaySearchResults();
     }
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error('Error fetching search results:', error);
   }
 }
+
+
+
+function displaySearchResults() {
+  searchResultsDiv.innerHTML = "";
+  document.getElementById("popularSection").style.display = "none";
+  document.getElementById('searchSection').style.display = "block";
+  
+  searchResults.forEach((movie) => {
+    const movieCard = createMovieCard(movie);
+    searchResultsDiv.appendChild(movieCard);
+  });
+}
+
+
+
+async function searchMovies() {
+  const searchQuery = document.getElementById("searchInput").value.trim();
+
+  if (searchQuery === "") {
+    displayPopularMovies();
+  } else {
+    try {
+      const apiUrl = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(searchQuery)}`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+
+      if (data.results && data.results.length > 0) {
+        searchResults = data.results;
+        searchResultsDiv.innerHTML = "";
+        document.getElementById("popularSection").style.display = "none";
+        document.getElementById('searchSection').style.display = "block";
+        data.results.forEach((movie) => {
+          const movieCard = createMovieCard(movie);
+          searchResultsDiv.appendChild(movieCard);
+        });
+        currentPage = 1; // Reset current page since it's a new search query
+      } else {
+        document.getElementById("popularSection").style.display = "none";
+        document.getElementById('searchSection').style.display = "block";
+
+        searchResultsDiv.innerHTML = "<p>No results found.</p>";
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  }
+}
+
+
+
+
+
+
 
 
 
@@ -201,13 +231,12 @@ function handleInfiniteScroll() {
   if (isBottomOfPage()) {
     currentPage++;
     if (document.getElementById("searchInput").value !== "") {
-      searchMovies();
+      fetchSearchResults(document.getElementById("searchInput").value, currentPage);
     } else {
       fetchPopularMovies(currentPage);
     }
   }
 }
-
 
 function lazyLoadMovieCards() {
   const movieCards = document.querySelectorAll('.movie-card');
