@@ -225,6 +225,13 @@ document.getElementById("searchBtn").addEventListener("click", (event) => {
 
 });
 
+const clearBtn =document.getElementById("clearBtn");
+
+clearBtn.addEventListener("click", (e)=>{
+  document.getElementById("searchInput").value ="";
+  document.getElementById("searchInput").focus()
+  displayPopularMovies()
+})
 
 
 
@@ -267,3 +274,4 @@ window.addEventListener('load', () => {
   fetchPopularMovies(currentPage);
   lazyLoadMovieCards();
 });
+
