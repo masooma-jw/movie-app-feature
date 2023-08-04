@@ -74,6 +74,11 @@ function createMovieCard(movie) {
   const movieRate = document.createElement('div')
   movieRate.style.color = 'rgb(221, 143, 215)';
   movieRate.innerHTML = `<h6>IMDB Rating: ${movie.vote_average}`;
+  if(movie.vote_average > 7){
+    movieRate.style.color = "yellow";
+  }else{
+    movieRate.style.color ="red";
+  }
 
   movieCard.appendChild(movieImage);
   movieCard.appendChild(movieTitle);
