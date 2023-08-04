@@ -4,6 +4,7 @@ const imageBaseUrl = "https://image.tmdb.org/t/p/w500";
 let popularMovies = [];
 let searchResults = [];
 let currentPage = 1;
+let totalSearchPages = 0; // Variable to store the total number of pages for search results
 
 async function fetchTop3() {
   let apiUrl = `https://api.themoviedb.org/3/trending/movie/day?api_key=${apiKey}`;
@@ -93,7 +94,8 @@ function createMovieCard(movie) {
 const popularMoviesSection = document.getElementById("popularMovies");
 
 
-async function fetchPopularMovies(page) {
+async function fetchPopularMovies(page)
+ {
   try {
     const url = `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&page=${page}`;
     const response = await fetch(url);
@@ -101,15 +103,13 @@ async function fetchPopularMovies(page) {
 
     if (data.results && data.results.length > 0) {
       popularMovies = [...popularMovies, ...data.results];
+      totalPopularPages = data.total_pages; // Update the total number of popular movie pages
       displayPopularMovies();
     }
   } catch (error) {
     console.error('Error fetching popular movies:', error);
   }
 }
-
-
-
 
 
 const searchResultsDiv = document.getElementById("searchResults");
@@ -125,6 +125,11 @@ async function fetchSearchResults(query, page) {
     const data = await response.json();
 
     if (data.results && data.results.length > 0) {
+      // If it's the first page, store the total number of pages for the search results
+      if (page === 1) {
+        totalSearchPages = data.total_pages;
+      }
+
       searchResults = [...searchResults, ...data.results];
       displaySearchResults();
     }
@@ -132,8 +137,6 @@ async function fetchSearchResults(query, page) {
     console.error('Error fetching search results:', error);
   }
 }
-
-
 
 function displaySearchResults() {
   searchResultsDiv.innerHTML = "";
@@ -160,19 +163,21 @@ async function searchMovies() {
       const data = await response.json();
 
       if (data.results && data.results.length > 0) {
+        // Reset the total number of pages and search results for a new search query
+        totalSearchPages = data.total_pages;
         searchResults = data.results;
         searchResultsDiv.innerHTML = "";
         document.getElementById("popularSection").style.display = "none";
         document.getElementById('searchSection').style.display = "block";
         data.results.forEach((movie) => {
-          const movieCard = createMovieCard(movie);
+          const movieCard = createMovieCard(movie)
+;
           searchResultsDiv.appendChild(movieCard);
         });
         currentPage = 1; // Reset current page since it's a new search query
       } else {
         document.getElementById("popularSection").style.display = "none";
         document.getElementById('searchSection').style.display = "block";
-
         searchResultsDiv.innerHTML = "<p>No results found.</p>";
       }
     } catch (error) {
@@ -180,6 +185,7 @@ async function searchMovies() {
     }
   }
 }
+
 
 
 
@@ -234,7 +240,6 @@ clearBtn.addEventListener("click", (e)=>{
 })
 
 
-
 function isBottomOfPage() {
   return window.innerHeight + window.scrollY >= document.body.offsetHeight;
 }
@@ -242,14 +247,28 @@ function isBottomOfPage() {
 
 function handleInfiniteScroll() {
   if (isBottomOfPage()) {
-    currentPage++;
-    if (document.getElementById("searchInput").value !== "") {
+    if (document.getElementById("searchInput").value !== "" && currentPage <= totalSearchPages) {
+      // Fetch more search results only if there are more pages available
+      currentPage++;
       fetchSearchResults(document.getElementById("searchInput").value, currentPage);
-    } else {
+    } else if (document.getElementById("searchInput").value === "" && currentPage <= totalPopularPages) {
+      // Fetch more popular movies only if there are more pages available
+      currentPage++;
       fetchPopularMovies(currentPage);
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
 
 function lazyLoadMovieCards() {
   const movieCards = document.querySelectorAll('.movie-card');
