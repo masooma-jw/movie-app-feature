@@ -30,7 +30,7 @@ async function fetchTop3() {
         });
 
         const movieImage = document.createElement("img");
-        movieImage.src = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+        movieImage.src = `${imageBaseUrl}${movie.poster_path}`;
         movieImage.alt = movie.title;
 
         carouselItem.style.background = `linear-gradient(rgba(0,0,0,0.9),rgba(40,9,30,0.9)),url(https://image.tmdb.org/t/p/w500${movie.poster_path}`;
@@ -52,6 +52,7 @@ function createMovieCard(movie) {
     "col-lg-2",
     "col-md-3",
     "col-sm-3",
+    "col-xs-1",
     "mb-4",
     "movie-card"
   );
@@ -62,7 +63,7 @@ function createMovieCard(movie) {
   movieCard.dataset.movieId = movie.id;
 
   const movieImage = document.createElement("img");
-  movieImage.src = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+  movieImage.src = `${imageBaseUrl}${movie.poster_path}`;
   movieImage.alt = movie.title;
   movieImage.classList.add("img-fluid");
   movieImage.loading="lazy";
