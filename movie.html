@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Movie App</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div>
+      <h2 id="movieTitle"></h2>
+      <div id="movieTrailer"></div>
+      <span>
+        <h4 id="movieRating">
+          IMDB RATING:
+
+          <span id="rating"></span>
+        </h4>
+        <h3>OVERVIEW</h3>
+        <p id="movieOverview"></p>
+      </span>
+      <h3>Cast:</h3>
+      <div id="movieCast"></div>
+    </div>
+
+    <script>
+      const apiKey = "2a5a6176cf791a73a44fd3b2855a512a";
+      const apiUrl = "https://api.themoviedb.org/3";
+      const imageBaseUrl = "https://image.tmdb.org/t/p/w500";
+      async function fetchMovieDetails(movieId) {
+        const url = `${apiUrl}/movie/${movieId}?api_key=${apiKey}&append_to_response=credits,videos`;
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+          return data;
+        } catch (error) {
+          console.error("Error fetching movie details:", error);
+          return null;
+        }
+      }
+      async function fetchMovieTrailer(movieId) {
+        const url = `${apiUrl}/movie/${movieId}/videos?api_key=${apiKey}`;
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+          if (data.results && data.results.length > 0) {
+            const trailers = data.results.filter((video) =>
+              ["Trailer"].includes(video.type)
+            );
+            if (trailers.length > 0) {
+              return `https://www.youtube.com/embed/${trailers[0].key}`;
+            }
+          }
+          return null;
+        } catch (error) {
+          console.error("Error fetching movie trailer:", error);
+          return null;
+        }
+      }
+
+      async function displayMovieDetails() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const movieId = urlParams.get("id");
+
+        if (movieId) {
+          const movieDetails = await fetchMovieDetails(movieId);
+          if (movieDetails) {
+            const movieTitle = document.getElementById("movieTitle");
+            const moviePoster = document.getElementById("moviePoster");
+            const movieOverview = document.getElementById("movieOverview");
+            const movieCast = document.getElementById("movieCast");
+            const movieTrailer = document.getElementById("movieTrailer");
+            const rating = document.getElementById("rating");
+            movieTitle.textContent = movieDetails.title;
+            rating.textContent = movieDetails.vote_average;
+
+            movieOverview.textContent = movieDetails.overview;
+            const creditsUrl = `${apiUrl}/movie/${movieId}/credits?api_key=${apiKey}`;
+            const creditsResponse = await fetch(creditsUrl);
+            const creditsData = await creditsResponse.json();
+            const cast = creditsData.cast.slice(0, 5);
+
+            movieCast.innerHTML = "";
+            cast.forEach((castMember) => {
+              const castCard = createCastCard(castMember);
+              movieCast.appendChild(castCard);
+            });
+
+            const trailerLink = await fetchMovieTrailer(movieId);
+            if (trailerLink) {
+              const iframe = document.createElement("iframe");
+              iframe.src = trailerLink;
+              iframe.width = "560";
+              iframe.height = "315";
+              iframe.allowFullscreen = true;
+              movieTrailer.appendChild(iframe);
+            }
+          }
+        } else {
+          console.error("Movie ID not found in URL parameters.");
+        }
+      }
+
+      function createCastCard(castMember) {
+        const castCard = document.createElement("div");
+        castCard.classList.add("col-md-2", "mb-4", "cast-card");
+
+        const castImage = document.createElement("img");
+        castImage.src = `https://image.tmdb.org/t/p/w500${castMember.profile_path}`;
+        castImage.alt = castMember.name;
+        castImage.classList.add("img-fluid");
+
+        const castName = document.createElement("h4");
+        castName.classList.add("mt-3");
+        castName.textContent = castMember.name;
+
+        castCard.appendChild(castImage);
+        castCard.appendChild(castName);
+
+        return castCard;
+      }
+
+      displayMovieDetails();
+    </script>
+  </body>
+</html>
